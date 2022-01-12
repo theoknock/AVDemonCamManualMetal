@@ -16,9 +16,9 @@ static CaptureDevicePropertyControlLayout * captureDevicePropertyControlLayoutBu
 
 @interface MetalAdder : NSObject
 
-- (instancetype) initWithDevice: (id<MTLDevice>) device arcCenter:(vector_float2)arc_center arcControlPoints:(matrix_float3x2)control_points;
-- (void) prepareData:(vector_float2)touch_point;
-- (float) sendComputeCommand;
+- (instancetype) initWithDevice: (id<MTLDevice>) device boundToContext:(CGRect)context_rect;
+- (void) prepareData:(CGPoint)touch_point
+- (void) sendComputeCommand;
 
 @end
 
