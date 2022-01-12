@@ -23,7 +23,8 @@ kernel void add_arrays(device CaptureDevicePropertyControlLayout & layout [[ buf
 
     for (int property = 0; property < 5; property++) {
         float angle   = (180.0 + (90.0 * (property / 4.0)));
-        float time    = angle / 270.0;
+        float time    = (1.0 - 0.0) * /*(fmax(old_min, fmin(old_value, old_max))*/ (angle - 180.0) / (270.0 - 180.0) + 0.0;
+
         float x = (1 - time) * (1 - time) * layout.arc_control_points.columns[0].x + 2 * (1 - time) * time * layout.arc_control_points.columns[1].x + time * time * layout.arc_control_points.columns[2].x;
         float y = (1 - time) * (1 - time) * layout.arc_control_points.columns[0].y + 2 * (1 - time) * time * layout.arc_control_points.columns[1].y + time * time * layout.arc_control_points.columns[2].y;
         layout.button_center_points[property] = vector_float2(x, y);
