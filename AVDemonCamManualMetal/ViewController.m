@@ -71,10 +71,22 @@ static void (^handle_touch)(void);
     self = [super init];
     if (self)
     {
-        _mDevice = device;
-        contextRect = CGRectIntegral(contextRect);
+        CaptureDevicePropertyControlLayout control_layout = (CaptureDevicePropertyControlLayout) {
+            .touch_point__angle    = {  (simd_make_float3(simd_make_float2(0.00, 0.00), 0.50))              },
+            .button_center__angle  = {  (simd_make_float3(simd_make_float2(0.00, 1.00), button_angles[0])),
+                                        (simd_make_float3(simd_make_float2(0.25, 0.25), button_angles[1])),
+                                        (simd_make_float3(simd_make_float2(0.50, 0.50), button_angles[2])),
+                                        (simd_make_float3(simd_make_float2(0.75, 0.75), button_angles[3])),
+                                        (simd_make_float3(simd_make_float2(1.00, 0.00), button_angles[4]))  },
+            .arc_center__radius    = {  (simd_make_float3(simd_make_float2(1.00, 1.00), 0.5))               },
+            .arc_control_points_xy = {  (simd_make_float3(0.0, 0.0, 1.0)),
+                                        (simd_make_float3(1.0, 0.5, 0.5))                                   }
+        };
+        contextRect = CGRectIntegral(context_rect);
         
         __autoreleasing NSError* error = nil;
+        
+        _mDevice = device;
         
         id<MTLLibrary> defaultLibrary = [_mDevice newDefaultLibrary];
         if (defaultLibrary == nil)
@@ -103,31 +115,31 @@ static void (^handle_touch)(void);
             NSLog(@"Failed to find the command queue.");
             return nil;
         }
-        
-        /*
-         
-         typedef struct
-         {
-         vector_float3 touch_point__angle;
-         vector_float3 button_center__angle[5];
-         vector_float3 arc_center__radius;
-         vector_float3 arc_control_points_xy[2];
-         } CaptureDevicePropertyControlLayout;
-         
-         */
+
+        int minX    = (float)CGRectGetMinX(contextRect);
+        int midX    = (float)CGRectGetMidX(contextRect);
+        int minXmid = ((midX & minX) + ((midX ^ minX) >> 1));
+        int maxX    = (float)CGRectGetMinX(contextRect);
+        int midXmax = ((maxX & midX) + ((maxX ^ midX) >> 1));
+                    
+        int minY    = (float)CGRectGetMinY(contextRect);
+        int midY    = (float)CGRectGetMidY(contextRect);
+        int minYmid = ((midY & minY) + ((midY ^ minY) >> 1));
+        int maxY    = (float)CGRectGetMinY(contextRect);
+        int midYmax = ((maxY & midY) + ((maxY ^ midY) >> 1));
         
         captureDevicePropertyControlLayoutBuffer       = [_mDevice newBufferWithLength:sizeof(CaptureDevicePropertyControlLayout) options:MTLResourceStorageModeShared];
         captureDevicePropertyControlLayoutBufferPtr    = captureDevicePropertyControlLayoutBuffer.contents;
         captureDevicePropertyControlLayoutBufferPtr[0] = (CaptureDevicePropertyControlLayout) {
             .touch_point__angle    = {  (simd_make_float3(simd_make_float2(0.00, 0.00), 0.50))              },
-            .button_center__angle  = {  (simd_make_float3(simd_make_float2(0.00, 1.00), button_angles[0])),
-                                        (simd_make_float3(simd_make_float2(0.25, 0.25), button_angles[1])),
-                                        (simd_make_float3(simd_make_float2(0.50, 0.50), button_angles[2])),
+            .button_center__angle  = {  (simd_make_float3(simd_make_float2(CGRectGetMinX(contextRect), 1.00), button_angles[0])),
+                                        (simd_make_float3(simd_make_float2(, CGRectGetMidY(contextRect) >> 1), button_angles[1])),
+                                        (simd_make_float3(simd_make_float2(CGRectGetMidX(contextRect), CGRectGetMidY(contextRect)), button_angles[2])),
                                         (simd_make_float3(simd_make_float2(0.75, 0.75), button_angles[3])),
-                                        (simd_make_float3(simd_make_float2(1.00, 0.00), button_angles[4]))  },
-            .arc_center__radius    = {  (simd_make_float3(simd_make_float2(1.00, 1.00), 0.5))               },
-            .arc_control_points_xy = {  (simd_make_float3(0.0, 0.0, 1.0)),
-                                        (simd_make_float3(1.0, 0.5, 0.5))                                   }
+                                        (simd_make_float3(simd_make_float2(CGRectGetMaxX(contextRect), 0.00), button_angles[4]))  },
+            .arc_center__radius    = {  (simd_make_float3(simd_make_float2(CGRectGetMaxX(contextRect), CGRectGetMaxY(contextRect)), CGRectGetMidX(contextRect)))               },
+            .arc_control_points_xy = {  (simd_make_float3(CGRectGetMinX(contextRect), CGRectGetMinX(contextRect), CGRectGetMaxX(contextRect))),
+                                        (simd_make_float3(CGRectGetMaxY(contextRect), CGRectGetMidY(contextRect), CGRectGetMidY(contextRect)))                                   }
         };
     }
     
@@ -137,12 +149,6 @@ static void (^handle_touch)(void);
 - (void)prepareData:(CGPoint)touch_point
 {
     captureDevicePropertyControlLayoutBufferPtr[0].touch_point__angle = simd_make_float3(simd_make_float2((float)(touch_point.x), (float)(touch_point.y)), (float)(0.0));
-//    captureDevicePropertyControlLayoutBufferPtr[0] = (CaptureDevicePropertyControlLayout) {
-//        .touch_point__angle    = (*captureDevicePropertyControlLayoutBufferPtr).touch_point__angle,
-//        .button_center__angle  = (*captureDevicePropertyControlLayoutBufferPtr).button_center__angle,
-//        .arc_center__radius    = (*captureDevicePropertyControlLayoutBufferPtr).arc_center__radius,
-//        .arc_control_points_xy = (*captureDevicePropertyControlLayoutBufferPtr).arc_control_points_xy
-//    };
 }
 
 - (void)encodeAddCommand:(id<MTLComputeCommandEncoder>)computeEncoder {
