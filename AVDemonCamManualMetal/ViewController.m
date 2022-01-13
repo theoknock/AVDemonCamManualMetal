@@ -116,30 +116,30 @@ static void (^handle_touch)(void);
             return nil;
         }
 
-        int minX    = (float)CGRectGetMinX(contextRect);
-        int midX    = (float)CGRectGetMidX(contextRect);
-        int minXmid = ((midX & minX) + ((midX ^ minX) >> 1));
-        int maxX    = (float)CGRectGetMinX(contextRect);
-        int midXmax = ((maxX & midX) + ((maxX ^ midX) >> 1));
+        float minX = (float)CGRectGetMinX(contextRect);
+        float midX = (float)CGRectGetMidX(contextRect);
+        float mdnX = (float)(((int)midX & (int)minX) + (((int)midX ^ (int)minX) >> 1));
+        float maxX = (float)CGRectGetMinX(contextRect);
+        float mdxX = (float)(((int)maxX & (int)midX) + (((int)maxX ^ (int)midX) >> 1));
                     
-        int minY    = (float)CGRectGetMinY(contextRect);
-        int midY    = (float)CGRectGetMidY(contextRect);
-        int minYmid = ((midY & minY) + ((midY ^ minY) >> 1));
-        int maxY    = (float)CGRectGetMinY(contextRect);
-        int midYmax = ((maxY & midY) + ((maxY ^ midY) >> 1));
+        float minY = (float)CGRectGetMinY(contextRect);
+        float midY = (float)CGRectGetMidY(contextRect);
+        float mdnY = (float)(((int)midY & (int)minY) + (((int)midY ^ (int)minY) >> 1));
+        float maxY = (float)CGRectGetMinY(contextRect);
+        float mdxY = (float)(((int)maxY & (int)midY) + (((int)maxY ^ (int)midY) >> 1));
         
         captureDevicePropertyControlLayoutBuffer       = [_mDevice newBufferWithLength:sizeof(CaptureDevicePropertyControlLayout) options:MTLResourceStorageModeShared];
         captureDevicePropertyControlLayoutBufferPtr    = captureDevicePropertyControlLayoutBuffer.contents;
         captureDevicePropertyControlLayoutBufferPtr[0] = (CaptureDevicePropertyControlLayout) {
-            .touch_point__angle    = {  (simd_make_float3(simd_make_float2(0.00, 0.00), 0.50))              },
-            .button_center__angle  = {  (simd_make_float3(simd_make_float2(CGRectGetMinX(contextRect), 1.00), button_angles[0])),
-                                        (simd_make_float3(simd_make_float2(, CGRectGetMidY(contextRect) >> 1), button_angles[1])),
-                                        (simd_make_float3(simd_make_float2(CGRectGetMidX(contextRect), CGRectGetMidY(contextRect)), button_angles[2])),
-                                        (simd_make_float3(simd_make_float2(0.75, 0.75), button_angles[3])),
-                                        (simd_make_float3(simd_make_float2(CGRectGetMaxX(contextRect), 0.00), button_angles[4]))  },
+            .touch_point__angle    = {  (simd_make_float3(simd_make_float2(minX, midY), 0.50))              },
+            .button_center__angle  = {  (simd_make_float3(simd_make_float2(minX, maxY), button_angles[0])),
+                                        (simd_make_float3(simd_make_float2(mdnX, mdxY), button_angles[1])),
+                                        (simd_make_float3(simd_make_float2(midX, midY), button_angles[2])),
+                                        (simd_make_float3(simd_make_float2(mdxX, mdnY), button_angles[3])),
+                                        (simd_make_float3(simd_make_float2(maxX, minY), button_angles[4]))  },
             .arc_center__radius    = {  (simd_make_float3(simd_make_float2(CGRectGetMaxX(contextRect), CGRectGetMaxY(contextRect)), CGRectGetMidX(contextRect)))               },
-            .arc_control_points_xy = {  (simd_make_float3(CGRectGetMinX(contextRect), CGRectGetMinX(contextRect), CGRectGetMaxX(contextRect))),
-                                        (simd_make_float3(CGRectGetMaxY(contextRect), CGRectGetMidY(contextRect), CGRectGetMidY(contextRect)))                                   }
+            .arc_control_points_xy = {  (simd_make_float3(minX, minX, maxX)),
+                                        (simd_make_float3(maxY, midY, midY))                                   }
         };
     }
     
